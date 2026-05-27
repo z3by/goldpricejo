@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Use the Netlify Next.js runtime plugin to enable Server Components,
+# Server Actions, and Incremental Static Regeneration (ISR)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
