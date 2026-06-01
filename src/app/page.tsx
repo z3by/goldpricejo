@@ -37,7 +37,7 @@ export default async function Home() {
     "@type": "Dataset",
     "name": "نشرة أسعار الذهب اليومية في الأردن",
     "description": `نشرة أسعار بيع وشراء الذهب اليومية لعيارات 24، 21، 18، 14 الصادرة عن نقابة أصحاب محلات الحلي والمجوهرات في الأردن. أسعار الصاغة الحالية: عيار 24 (بيع ${p24.sell.toFixed(2)} / شراء ${p24.buy.toFixed(2)})، عيار 21 (بيع ${p21.sell.toFixed(2)} / شراء ${p21.buy.toFixed(2)})، عيار 18 (بيع ${p18.sell.toFixed(2)} / شراء ${p18.buy.toFixed(2)}).`,
-    "url": "https://goldpricejo.netlify.app",
+    "url": "https://goldpricejordan.online",
     "isAccessibleForFree": true,
     "creator": {
       "@type": "Organization",

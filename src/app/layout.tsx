@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ar_JO",
-    url: "https://goldpricejo.netlify.app",
+    url: "https://goldpricejordan.online",
     title: "أسعار الذهب اليوم في الأردن | تحديث مباشر (مؤشر غير رسمي)",
     description: "تغطية شاملة ومباشرة لأسعار الذهب في الأردن اليوم للبيع والشراء لعيارات 24، 21، 18، 14 وفق تسعيرة الصاغة (موقع استرشادي غير رسمي) مع حاسبة ذكية.",
     siteName: "سعر الذهب اليوم في الأردن (غير رسمي)",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     images: ["https://jjsjo.com/site/media/logo.png"]
   },
   alternates: {
-    canonical: "https://goldpricejo.netlify.app"
+    canonical: "https://goldpricejordan.online"
   }
 };
 
