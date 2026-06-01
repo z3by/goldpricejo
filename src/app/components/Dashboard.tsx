@@ -40,6 +40,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
   const [plannerPreference, setPlannerPreference] = useState<"combo" | "sovereigns" | "bars">("combo");
   const [copied, setCopied] = useState<boolean>(false);
   const [ounceSize, setOunceSize] = useState<OunceSizeType>("ounce");
+  const [priceTableTab, setPriceTableTab] = useState<"grams" | "bullion">("grams");
 
   const handleRefresh = async (silent = false) => {
     setRefreshError(null);
@@ -264,13 +265,6 @@ export default function Dashboard({ initialData }: DashboardProps) {
     }
   };
 
-  const shareText = `أسعار الذهب اليوم في الأردن حسب نشرة الصاغة:\n` +
-    `• عيار 24: بيع ${data.prices.find(p=>p.karat==="24K")?.sell || '-'} / شراء ${data.prices.find(p=>p.karat==="24K")?.buy || '-'}\n` +
-    `• عيار 21: بيع ${data.prices.find(p=>p.karat==="21K")?.sell || '-'} / شراء ${data.prices.find(p=>p.karat==="21K")?.buy || '-'}\n` +
-    `• عيار 18: بيع ${data.prices.find(p=>p.karat==="18K")?.sell || '-'} / شراء ${data.prices.find(p=>p.karat==="18K")?.buy || '-'}\n` +
-    `احسب التكلفة الإجمالية والـمصنعيات مباشرة عبر الرابط:\n`;
-
-  const encodedShareText = typeof window !== "undefined" ? encodeURIComponent(shareText + window.location.href) : "";
 
   return (
     <>
@@ -891,34 +885,194 @@ export default function Dashboard({ initialData }: DashboardProps) {
               )}
             </section>
 
-          {/* Full Width: FAQs */}
-          <section className="minimal-panel col-span-12">
-            <h2 style={{ marginBottom: "24px" }}>دليل المستثمر</h2>
-            
-            <div>
-              {[
-                {
-                  title: "كيف يتم احتساب أسعار الذهب الرسمية في الأردن؟",
-                  body: "تحدد التسعيرة الصادرة عن نقابة الصاغة (نقابة أصحاب محلات الحلي والمجوهرات في الأردن) بناءً على سعر أونصة الذهب عالمياً بالدولار الأمريكي، وسعر صرف الدينار الأردني المربوط بالدولار الأمريكي (المثبت عند 0.709 دينار للدولار)، وتكاليف الدمغة والشحن والاستيراد."
-                },
-                {
-                  title: "ما الفرق بين سعر البيع وسعر الشراء المنشورين؟",
-                  body: "سعر البيع هو السعر الرسمي الذي تشتري به قطعة الذهب الجديدة من الصائغ. سعر الشراء هو السعر الرسمي الذي تدفعه محلات الصاغة لك عندما ترغب في بيع ذهبك القديم أو المستعمل لديهم."
-                },
-                {
-                  title: "كيف تُحسب أجور المصنعية في الأردن؟",
-                  body: "المصنعية هي الأجرة المضافة مقابل صياغة القطعة وتصميمها. في الأردن، تتراوح أجور المصنعية للذهب عيار 21 تقريباً بين 3.5 إلى 6 دنانير أردنية لكل غرام، وعيار 18 بين 5 إلى 9 دنانير، بينما تتراوح مصنعية السبائك والليرات الاستثمارية بين 1 إلى 2.5 دينار للغرام."
-                }
-              ].map((faq, index) => (
-                <details key={index}>
-                  <summary>{faq.title}</summary>
-                  <div className="details-content">
-                    {faq.body}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </section>
+            {/* Full Width: Gold Price Reference Table */}
+            <section className="minimal-panel col-span-12">
+              <div className="panel-heading" style={{ marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+                <h2 style={{ margin: 0 }}>جدول مرجعية أسعار الذهب اليوم بالدينار الأردني</h2>
+                <div className="tab-container" style={{ margin: 0 }}>
+                  <button
+                    type="button"
+                    className={`tab-btn ${priceTableTab === "grams" ? "active" : ""}`}
+                    onClick={() => setPriceTableTab("grams")}
+                    style={{ padding: "6px 16px" }}
+                  >
+                    أسعار الغرامات الشائعة
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab-btn ${priceTableTab === "bullion" ? "active" : ""}`}
+                    onClick={() => setPriceTableTab("bullion")}
+                    style={{ padding: "6px 16px" }}
+                  >
+                    أسعار الليرات والسبائك
+                  </button>
+                </div>
+              </div>
+
+              <div className="table-responsive">
+                {priceTableTab === "grams" ? (
+                  <table className="seo-price-table">
+                    <thead>
+                      <tr>
+                        <th>الوزن والعيار</th>
+                        <th>سعر الخام (بيع)</th>
+                        <th>شامل المصنعية التقريبية</th>
+                        <th>سعر الشراء (عند البيع للصائغ)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[21, 18, 24].map((karatNum) => {
+                        const karatKey = `${karatNum}K`;
+                        const priceObj = data.prices.find((p) => p.karat === karatKey) || { sell: 0, buy: 0 };
+                        const feePerGram = karatNum === 24 ? 1.5 : karatNum === 21 ? 5.0 : 7.0;
+                        const label = karatNum === 24 ? "ذهب صافي" : karatNum === 21 ? "مؤشر السوق" : "مجوهرات";
+
+                        return [1, 5, 10, 20, 50, 100].map((w) => {
+                          const rawSell = priceObj.sell * w;
+                          const withFeeSell = (priceObj.sell + feePerGram) * w;
+                          const rawBuy = priceObj.buy * w;
+                          return (
+                            <tr key={`${karatNum}-${w}`}>
+                              <td>
+                                <strong>{w} غرام عيار {karatNum}</strong>
+                                <span className="table-sub-label">({label})</span>
+                              </td>
+                              <td className="num-font">{rawSell.toFixed(2)} د.أ</td>
+                              <td className="num-font highlighted">{withFeeSell.toFixed(2)} د.أ</td>
+                              <td className="num-font text-muted-val">{rawBuy.toFixed(2)} د.أ</td>
+                            </tr>
+                          );
+                        });
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="seo-price-table">
+                    <thead>
+                      <tr>
+                        <th>المنتج الاستثماري</th>
+                        <th>الوزن والعيار</th>
+                        <th>سعر الخام (بيع)</th>
+                        <th>شامل أجور الدمغة والمصنعية</th>
+                        <th>سعر الشراء (عند البيع للصائغ)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { name: "ليرة إنجليزية", weight: "8.00 غرام", karat: "عيار 21", rawSell: english21Sell, withFee: english21Sell + 2.5, buy: english21Buy },
+                        { name: "ليرة رشادية", weight: "7.20 غرام", karat: "عيار 21", rawSell: rashadi21Sell, withFee: rashadi21Sell + 2.0, buy: rashadi21Buy },
+                        { name: "أونصة الذهب", weight: "31.10 غرام", karat: "عيار 24", rawSell: ounceSell, withFee: ounceSell + 31.10347 * 1.5, buy: ounceBuy },
+                        { name: "سبيكة 1 غرام", weight: "1.00 غرام", karat: "عيار 24", rawSell: p24.sell * 1, withFee: p24.sell * 1 + 5.0, buy: p24.buy * 1 },
+                        { name: "سبيكة 5 غرام", weight: "5.00 غرام", karat: "عيار 24", rawSell: p24.sell * 5, withFee: p24.sell * 5 + 10.0, buy: p24.buy * 5 },
+                        { name: "سبيكة 10 غرام", weight: "10.00 غرام", karat: "عيار 24", rawSell: p24.sell * 10, withFee: p24.sell * 10 + 15.0, buy: p24.buy * 10 },
+                        { name: "سبيكة 20 غرام", weight: "20.00 غرام", karat: "عيار 24", rawSell: p24.sell * 20, withFee: p24.sell * 20 + 20.0, buy: p24.buy * 20 },
+                        { name: "سبيكة 50 غرام", weight: "50.00 غرام", karat: "عيار 24", rawSell: p24.sell * 50, withFee: p24.sell * 50 + 40.0, buy: p24.buy * 50 },
+                        { name: "سبيكة 100 غرام", weight: "100.00 غرام", karat: "عيار 24", rawSell: p24.sell * 100, withFee: p24.sell * 100 + 75.0, buy: p24.buy * 100 },
+                      ].map((item, idx) => (
+                        <tr key={idx}>
+                          <td><strong>{item.name}</strong></td>
+                          <td>{item.weight} <span className="table-sub-label">({item.karat})</span></td>
+                          <td className="num-font">{item.rawSell.toFixed(2)} د.أ</td>
+                          <td className="num-font highlighted">{item.withFee.toFixed(2)} د.أ</td>
+                          <td className="num-font text-muted-val">{item.buy.toFixed(2)} د.أ</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              <p className="table-footnote">
+                * الأسعار والـمصنعيات الموضحة هي قيم استرشادية مبنية على تسعيرة اليوم ومصنعية السوق التقريبية.
+              </p>
+            </section>
+
+            {/* Full Width: FAQs & Rich Guide */}
+            <section className="minimal-panel col-span-12">
+              <h2 style={{ marginBottom: "24px" }}>دليل ومقالات مستثمري الذهب في الأردن</h2>
+              
+              <div className="investor-guide-grid">
+                <div className="guide-card">
+                  <div className="guide-icon">🛡️</div>
+                  <h3>السبائك والليرات أم الحلي والمجوهرات؟</h3>
+                  <p>
+                    إذا كان هدفك الرئيسي هو الادخار والاستثمار، فننصحك دائماً بالابتعاد عن المشغولات والحلي الذهبية والتركيز على شراء الليرات الذهبية (الإنجليزي والرشادية) والسبائك النقية (عيار 24). السبب في ذلك يرجع إلى انخفاض أجور المصنعية والدمغة بشكل كبير عليها (تتراوح بين 1 إلى 2.5 دينار للغرام)، بعكس المجوهرات التي تتراوح مصنعيتها بين 4 إلى 8 دنانير وتخسرها بالكامل فور البيع.
+                  </p>
+                </div>
+
+                <div className="guide-card">
+                  <div className="guide-icon">⚖️</div>
+                  <h3>الليرة الإنجليزية والليرة الرشادية</h3>
+                  <p>
+                    تعد الليرات الذهبية من أشهر وسائل الادخار في الأردن:
+                  </p>
+                  <ul>
+                    <li><strong>الليرة الإنجليزية:</strong> تزن 8 غرامات وتصنع من الذهب عيار 21 (نقاء 87.5%).</li>
+                    <li><strong>الليرة الرشادية:</strong> تزن 7.2 غرامات وتصنع أيضاً من الذهب عيار 21.</li>
+                  </ul>
+                  <p>
+                    كلاهما خيار ممتاز للاستثمار، والفرق بينهما يكمن في الوزن والشكل الخارجي والرسومات المطبوعة عليهما فقط.
+                  </p>
+                </div>
+
+                <div className="guide-card">
+                  <div className="guide-icon">🔎</div>
+                  <h3>كيف تتحقق من الدمغة والعيار؟</h3>
+                  <p>
+                    في الأردن، يمنع قانوناً بيع أي مصوغ ذهبي دون دمغه من قبل مؤسسة المواصفات والمقاييس الأردنية. تأكد دائماً من وجود الأرقام التالية المحفورة بدقة على القطعة:
+                  </p>
+                  <ul>
+                    <li><strong>999 أو 999.9:</strong> تدل على عيار 24 (الذهب الخالص).</li>
+                    <li><strong>875:</strong> تدل على عيار 21 (الأكثر تداولاً).</li>
+                    <li><strong>750:</strong> تدل على عيار 18 (المجوهرات المطعمة بالأحجار).</li>
+                  </ul>
+                </div>
+
+                <div className="guide-card">
+                  <div className="guide-icon">📑</div>
+                  <h3>أهمية الفاتورة الرسمية المفصلة</h3>
+                  <p>
+                    عند الشراء، احرص على ألا تغادر المحل دون الحصول على فاتورة تفصيلية معتمدة ومختومة تحتوي على: اسم المحل بالكامل، وزن الذهب الصافي، العيار بدقة، سعر المصنعية والدمغة بشكل منفصل، وسعر الذهب الخام وقت الشراء. هذه الفاتورة هي مستندك القانوني الوحيد لإثبات ملكية الذهب ونقائه عند بيعه مستقبلاً.
+                  </p>
+                </div>
+              </div>
+
+              <h3 style={{ marginTop: "40px", marginBottom: "20px" }}>الأسئلة الشائعة حول أسعار الذهب</h3>
+              <div>
+                {[
+                  {
+                    title: "كيف يتم احتساب أسعار الذهب الرسمية في الأردن؟",
+                    body: "تحدد التسعيرة الصادرة عن نقابة الصاغة (نقابة أصحاب محلات الحلي والمجوهرات في الأردن) بناءً على سعر أونصة الذهب عالمياً بالدولار الأمريكي، وسعر صرف الدينار الأردني المربوط بالدولار الأمريكي (المثبت عند 0.709 دينار للدولار)، وتكاليف الدمغة والشحن والاستيراد."
+                  },
+                  {
+                    title: "ما الفرق بين سعر البيع وسعر الشراء المنشورين؟",
+                    body: "سعر البيع هو السعر الرسمي الذي تشتري به قطعة الذهب الجديدة من الصائغ. سعر الشراء هو السعر الرسمي الذي تدفعه محلات الصاغة لك عندما ترغب في بيع ذهبك القديم أو المستعمل لديهم."
+                  },
+                  {
+                    title: "كيف تُحسب أجور المصنعية في الأردن؟",
+                    body: "المصنعية هي الأجرة المضافة مقابل صياغة القطعة وتصميمها. في الأردن، تتراوح أجور المصنعية للذهب عيار 21 تقريباً بين 3.5 إلى 6 دنانير أردنية لكل غرام، وعيار 18 بين 5 إلى 9 دنانير، بينما تتراوح مصنعية السبائك والليرات الاستثمارية بين 1 إلى 2.5 دينار للغرام."
+                  },
+                  {
+                    title: "هل يفقد الذهب قيمته عند البيع بسبب المصنعية؟",
+                    body: "نعم، عند بيع المشغولات والحلي الذهبية المستعملة للصاغة، يتم خصم كامل قيمة أجور المصنعية والصياغة، ويُحسب السعر بناءً على وزن الذهب الصافي فقط وفق سعر الشراء المعلن. لذلك فإن الليرات والسبائك هي الأفضل للادخار لأن مصنعيتها منخفضة جداً ولا تمثل خسارة كبيرة عند البيع."
+                  },
+                  {
+                    title: "ما هو الفرق بين الليرة الإنجليزية والليرة الرشادية في الأردن؟",
+                    body: "الليرة الإنجليزية تزن 8 غرامات وتكون من عيار 21 (بنسبة نقاء 87.5%)، أما الليرة الرشادية فتزن 7.2 غرامات وتكون أيضاً من عيار 21. تختلفان في الوزن والتصميم التاريخي المطبوع عليهما."
+                  },
+                  {
+                    title: "كيف أتأكد من صحة دمغة الذهب وجودته في الأردن؟",
+                    body: "تخضع جميع المصوغات لرقابة مؤسسة المواصفات والمقاييس الأردنية. يجب البحث عن الدمغة الرسمية التي تحدد العيار (مثل 875 لعيار 21، و750 لعيار 18). احرص دائماً على طلب فاتورة رسمية ومفصلة من الصائغ توضح الوزن والعيار والمصنعية."
+                  }
+                ].map((faq, index) => (
+                  <details key={index}>
+                    <summary>{faq.title}</summary>
+                    <div className="details-content">
+                      {faq.body}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </section>
 
         </div>
       </main>
@@ -938,10 +1092,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
               <strong>سعر الذهب — الأردن</strong> — أسعار استرشادية محدثة آلياً من البيانات المنشورة (موقع غير رسمي).
             </div>
             
-            <div className="footer-links">
-              <a href={`https://api.whatsapp.com/send?text=${encodedShareText}`} target="_blank" rel="noopener noreferrer">واتساب</a>
-              <a href={`https://t.me/share/url?url=${encodedShareText ? typeof window !== "undefined" ? encodeURIComponent(window.location.href) : "" : ""}&text=${encodedShareText}`} target="_blank" rel="noopener noreferrer">تليغرام</a>
-            </div>
+
           </div>
         </div>
       </footer>

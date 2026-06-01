@@ -1,9 +1,46 @@
+import type { Metadata } from "next";
 import { fetchGoldPrices } from "./actions";
 import Dashboard from "./components/Dashboard";
 
 // Enable background Incremental Static Regeneration (ISR)
 // Rebuilds the page in the background at most every 5 minutes (300 seconds) on Netlify
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const initialData = await fetchGoldPrices();
+
+  const p24 = initialData.prices.find((p) => p.karat === "24K") || { sell: 0, buy: 0 };
+  const p21 = initialData.prices.find((p) => p.karat === "21K") || { sell: 0, buy: 0 };
+  const p18 = initialData.prices.find((p) => p.karat === "18K") || { sell: 0, buy: 0 };
+
+  const title = `أسعار الذهب اليوم في الأردن | عيار 21 بـ ${p21.sell.toFixed(2)} د.أ (تحديث مباشر)`;
+  const description = `تابع أسعار الذهب اليوم في الأردن لحظة بلحظة لجميع العيارات. أسعار الصاغة الحالية: عيار 24 بـ ${p24.sell.toFixed(2)} د.أ، عيار 21 بـ ${p21.sell.toFixed(2)} د.أ، عيار 18 بـ ${p18.sell.toFixed(2)} د.أ. حاسبة ذهب تفاعلية ذكية للبيع والشراء والمصنعيات.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: "https://goldpricejordan.online",
+      type: "website",
+      images: [
+        {
+          url: "https://jjsjo.com/site/media/logo.png",
+          width: 800,
+          height: 600,
+          alt: "أسعار الذهب في الأردن اليوم"
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["https://jjsjo.com/site/media/logo.png"]
+    }
+  };
+}
 
 export default async function Home() {
   // Fetch initial pricing data server-side
@@ -79,6 +116,38 @@ export default async function Home() {
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "المصنعية هي الأجرة المضافة مقابل صياغة القطعة وتصميمها. في الأردن، تتراوح أجور المصنعية للذهب عيار 21 تقريباً بين 3.5 إلى 6 دنانير أردنية لكل غرام، وعيار 18 بين 5 إلى 9 دنانير، بينما تتراوح مصنعية السبائك والليرات الاستثمارية بين 1 إلى 2.5 دينار للغرام."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "ما هو الفرق بين الليرة الإنجليزية والليرة الرشادية في الأردن؟",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "الليرة الإنجليزية تزن 8 غرامات وتكون من عيار 21 (بنسبة نقاء 87.5%)، أما الليرة الرشادية فتزن 7.2 غرامات وتكون أيضاً من عيار 21. تختلفان في الوزن والتصميم التاريخي المطبوع عليهما."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "هل يعتبر الذهب ملاذاً آمناً للاستثمار في الأردن؟",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "نعم، يعتبر الذهب وسيلة ممتازة لحفظ القيمة ضد التضخم. للاستثمار، يُفضل شراء السبائك الذهبية (عيار 24) أو الليرات (سواء الإنجليزية أو الرشادية) لأن أجور مصنعيتها منخفضة جداً مقارنة بالمشغولات الذهبية ولا تفقد قيمتها عند البيع."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "كيف أتأكد من صحة دمغة الذهب وجودته في الأردن؟",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "تخضع جميع المصوغات لرقابة مؤسسة المواصفات والمقاييس الأردنية. يجب البحث عن الدمغة الرسمية التي تحدد العيار (مثل 875 لعيار 21، و750 لعيار 18). احرص دائماً على طلب فاتورة رسمية ومفصلة من الصائغ توضح الوزن والعيار والمصنعية."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "هل يفقد الذهب قيمته عند البيع بسبب المصنعية؟",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "نعم، عند بيع المشغولات والحلي الذهبية المستعملة للصاغة، يتم خصم كامل قيمة أجور المصنعية والصياغة، ويُحسب السعر بناءً على وزن الذهب الصافي فقط. لذلك فإن الليرات والسبائك هي الأفضل للادخار لأن مصنعيتها منخفضة جداً ولا تمثل خسارة كبيرة عند البيع."
         }
       }
     ]
